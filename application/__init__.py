@@ -13,7 +13,7 @@ login_manager = LoginManager()
 
 def create_app():
     """Application Factory Pattern to create and configure the Flask app."""
-    app = Flask(__name__)
+    application = app = Flask(__name__)
 
     # Set configuration values
     app.config['SECRET_KEY'] = 'your_secret_key_here'
