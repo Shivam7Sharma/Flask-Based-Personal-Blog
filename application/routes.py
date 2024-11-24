@@ -33,6 +33,8 @@ def register():
     logger.debug("Rendering registration form.")
     return render_template('register.html', title='Register', form=form)
 
+# werkzeug.routing.BuildError: Could not build url for endpoint 'login'. Did you mean 'routes.login' instead?
+
 
 @routes_blueprint.route("/login", methods=['GET', 'POST'])
 def login():
