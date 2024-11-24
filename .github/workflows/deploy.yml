@@ -36,3 +36,15 @@ jobs:
       run: |
         zip -r app.zip .
         aws s3 cp app.zip s3://flask-app-deployment/app.zip --debug
+
+      - name: Deploy to Elastic Beanstalk
+      run: |
+        aws elasticbeanstalk create-application-version \
+          --application-name Flask-Personal-Blog \
+          --version-label v1.0.${{ github.run_number }} \
+          --source-bundle S3Bucket=flask-app-deployment,S3Key=app.zip
+        
+        aws elasticbeanstalk update-environment \
+          --application-name Flask-Personal-Blog \
+          --environment-name Flask-Personal-Blog-env \
+          --version-label v1.0.${{ github.run_number }}
