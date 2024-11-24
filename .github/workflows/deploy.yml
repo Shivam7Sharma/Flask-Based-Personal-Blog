@@ -44,5 +44,5 @@ jobs:
         
         aws elasticbeanstalk update-environment \
           --application-name Flask-Personal-Blog \
-          --environment-name Flask-Personal-Blog-env \
+          --environment-name Flask-Personal-Blog-env-env \
           --version-label v1.0.${{ github.run_number }}
