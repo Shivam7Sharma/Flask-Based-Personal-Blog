@@ -38,11 +38,11 @@ jobs:
     - name: Deploy to Elastic Beanstalk
       run: |
         aws elasticbeanstalk create-application-version \
-          --application-name Flask-Personal-Blog \
+          --application-name Flask-Personal-Blog-env \
           --version-label v1.0.${{ github.run_number }} \
           --source-bundle S3Bucket=flask-app-deployment,S3Key=app.zip
         
         aws elasticbeanstalk update-environment \
-          --application-name Flask-Personal-Blog \
+          --application-name Flask-Personal-Blog-env \
           --environment-name Flask-Personal-Blog-env-env \
           --version-label v1.0.${{ github.run_number }}
