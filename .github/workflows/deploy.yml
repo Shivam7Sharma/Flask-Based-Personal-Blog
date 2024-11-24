@@ -11,12 +11,14 @@ jobs:
 
     steps:
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
+
       with:
         python-version: '3.10'  # Replace with your Python version
 
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
+
 
     - name: Install dependencies
       run: |
@@ -33,4 +35,4 @@ jobs:
     - name: Upload to S3
       run: |
         zip -r app.zip .
-        aws s3 cp app.zip s3://flask-app-deployment/app.zip
+        aws s3 cp app.zip s3://flask-app-deployment/app.zip --debug
