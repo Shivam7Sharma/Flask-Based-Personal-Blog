@@ -11,9 +11,18 @@
     <h1>Login</h1>
     <form method="POST" action="{{ url_for('login') }}">
         {{ form.hidden_tag() }}
-        {{ form.email.label }} {{ form.email(size=32) }}<br>
-        {{ form.password.label }} {{ form.password(size=32) }}<br>
-        {{ form.submit() }}
+        <div>
+            {{ form.email.label }} {{ form.email }}
+        </div>
+        <div>
+            {{ form.password.label }} {{ form.password }}
+        </div>
+        <div>
+            {{ form.remember.label }} {{ form.remember }} <!-- Checkbox for 'Remember Me' -->
+        </div>
+        <div>
+            {{ form.submit }}
+        </div>
     </form>
 </body>
 
