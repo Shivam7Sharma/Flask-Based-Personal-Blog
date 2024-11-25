@@ -1,9 +1,9 @@
 import logging
 from flask import Blueprint, render_template, url_for, flash, redirect, request
 from flask_login import login_user, current_user, logout_user
-from application import db, bcrypt, mongo
-from application.models import User, Post
-from application.forms import RegistrationForm, LoginForm
+from app import db, bcrypt, mongo
+from app.models import User, Post
+from app.forms import RegistrationForm, LoginForm
 from datetime import datetime
 
 # Configure logging

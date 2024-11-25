@@ -30,7 +30,7 @@ def create_app():
     login_manager.login_view = 'routes.login'  # Updated to use blueprint naming
 
     # Import and register blueprints
-    from application.routes import routes_blueprint
+    from app.routes import routes_blueprint
     application.register_blueprint(routes_blueprint)
 
     return application
