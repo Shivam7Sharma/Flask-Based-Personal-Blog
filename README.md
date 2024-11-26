@@ -16,7 +16,7 @@ This is a personal project developed in February 2024. It's a full-stack persona
 - User-friendly: A platform for personal storytelling and content sharing.
 
 ## Deployment
-The application is successfully deployed on Heroku, resulting in a user-friendly platform for personal storytelling and content sharing, with active monthly user engagement.
+The application is successfully deployed on AWS Elastic Beanstalk, resulting in a user-friendly platform for personal storytelling and content sharing, with active monthly user engagement.
 
 ## Future Improvements
 - Add comment functionality for each blog post.
