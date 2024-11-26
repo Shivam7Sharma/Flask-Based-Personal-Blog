@@ -4,9 +4,11 @@ This is a personal project developed in February 2024. It's a full-stack persona
 
 ## Technologies Used
 - **Backend**: Flask
-- **Database Management**: SQLAlchemy
-- **Templating**: Jinja2
-- **Frontend**: Bootstrap
+- **Database Management**: SQLAlchemy, MongoDB, Mysql
+- **Frontend**: React
+- **Deployment**: AWS Elastic Beanstalk
+- **CI/CD**: Github Actions
+- **API**: Flask-RESTful
 
 ## Features
 - User Authentication: Register, login, and logout.
@@ -28,6 +30,9 @@ To run it locally:
 2. Install the requirements: `pip install -r requirements.txt`
 3. Set the FLASK_APP environment variable: `export FLASK_APP=run.py`
 4. Run the application: `flask run`
+5. Run `npm install`
+6. Run the frontend: `npm start`
+  
 
 ## License
 This project is licensed under the MIT License.
