@@ -1,11 +1,14 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 from flask_login import LoginManager
 from flask_bcrypt import Bcrypt
 from flask_pymongo import PyMongo
+from flask_cors import CORS
 
 # Initialize extensions globally
 db = SQLAlchemy()
+migrate = Migrate()  # Add Flask-Migrate
 bcrypt = Bcrypt()
 mongo = PyMongo()
 login_manager = LoginManager()
@@ -14,6 +17,7 @@ login_manager = LoginManager()
 def create_app():
     """Application Factory Pattern to create and configure the Flask application."""
     application = Flask(__name__)
+    CORS(application)
 
     # Set configuration values
     application.config['SECRET_KEY'] = 'your_secret_key_here'
@@ -24,6 +28,7 @@ def create_app():
 
     # Initialize extensions with the application
     db.init_app(application)
+    migrate.init_app(application, db)  # Add migration initialization
     bcrypt.init_app(application)
     mongo.init_app(application)
     login_manager.init_app(application)

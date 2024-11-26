@@ -3,3 +3,13 @@
 .elasticbeanstalk/*
 !.elasticbeanstalk/*.cfg.yml
 !.elasticbeanstalk/*.global.yml
+
+#Flask-Based-Personal-Blog
+__pycache__/
+*.pyc
+env/
+venv/
+
+# Frontend
+node_modules/
+build/

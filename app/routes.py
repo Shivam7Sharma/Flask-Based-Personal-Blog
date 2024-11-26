@@ -1,94 +1,113 @@
-import logging
-from flask import Blueprint, render_template, url_for, flash, redirect, request
-from flask_login import login_user, current_user, logout_user
-from app import db, bcrypt, mongo
-from app.models import User, Post
-from app.forms import RegistrationForm, LoginForm
-from datetime import datetime
+from flask import Blueprint, request, jsonify, session
+from flask_bcrypt import check_password_hash, generate_password_hash
+from flask_login import login_user, logout_user, login_required, current_user
+from app.models import User, BlogPost, db
+from app import mongo
 
-# Configure logging
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
-
-# Create a blueprint
 routes_blueprint = Blueprint('routes', __name__)
 
+# User Registration Endpoint
 
-@routes_blueprint.route("/register", methods=['GET', 'POST'])
+
+@routes_blueprint.route('/api/register', methods=['POST'])
 def register():
-    if current_user.is_authenticated:
-        logger.debug("User already authenticated. Redirecting to home.")
-        return redirect(url_for('routes.home'))
-    form = RegistrationForm()
-    if form.validate_on_submit():
-        hashed_password = bcrypt.generate_password_hash(
-            form.password.data).decode('utf-8')
-        user = User(username=form.username.data,
-                    email=form.email.data, password=hashed_password)
-        db.session.add(user)
-        db.session.commit()
-        logger.debug(f"New user registered: {user.username}")
-        flash('Your account has been created! You are now able to log in', 'success')
-        return redirect(url_for('routes.login'))
-    logger.debug("Rendering registration form.")
-    return render_template('register.html', title='Register', form=form)
+    data = request.json
+    if User.query.filter_by(email=data['email']).first():
+        return jsonify({'error': 'Email already registered'}), 400
 
-# werkzeug.routing.BuildError: Could not build url for endpoint 'login'. Did you mean 'routes.login' instead?
+    hashed_password = generate_password_hash(data['password']).decode('utf-8')
+    new_user = User(email=data['email'], password=hashed_password)
+    db.session.add(new_user)
+    db.session.commit()
+
+    # Log to MongoDB
+    mongo.db.logs.insert_one({"action": "register", "email": data['email']})
+    return jsonify({'message': 'User registered successfully'})
+
+# User Login Endpoint
 
 
-@routes_blueprint.route("/login", methods=['GET', 'POST'])
+@routes_blueprint.route('/api/login', methods=['POST'])
 def login():
-    logger.debug("Entering login route.")
-    if current_user.is_authenticated:
-        logger.debug("User already authenticated. Redirecting to home.")
-        return redirect(url_for('routes.home'))
-    form = LoginForm()
-    if form.validate_on_submit():
-        logger.debug("Form submitted successfully.")
-        user = User.query.filter_by(email=form.email.data).first()
-        if user and bcrypt.check_password_hash(user.password, form.password.data):
-            logger.debug("Password matched. Logging in user.")
-            login_user(user, remember=form.remember.data)
-            # Log the action in MongoDB
-            try:
-                mongo.db.activity_logs.insert_one({
-                    "user_id": user.id,
-                    "action": "logged in",
-                    "timestamp": datetime.utcnow()
-                })
-            except Exception as e:
-                logger.error(f"Error inserting log into MongoDB: {e}")
-            next_page = request.args.get('next')
-            return redirect(next_page) if next_page else redirect(url_for('routes.home'))
-        else:
-            logger.warning("Login unsuccessful: Invalid credentials.")
-            flash('Login Unsuccessful. Please check email and password', 'danger')
-    logger.debug("Rendering login form.")
-    return render_template('login.html', title='Login', form=form)
+    data = request.json
+    user = User.query.filter_by(email=data['email']).first()
+
+    if user and check_password_hash(user.password, data['password']):
+        login_user(user)
+        session['user_id'] = user.id
+
+        # Debugging
+        print({"message": "Login successful", "token": str(user.id)})
+
+        return jsonify({'message': 'Login successful', 'token': str(user.id)})
+
+    print({"error": "Invalid credentials"})
+    return jsonify({'error': 'Invalid credentials'}), 401
 
 
-@routes_blueprint.route("/logout")
-def logout():
-    logger.debug("Logging out user.")
-    logout_user()
-    return redirect(url_for('routes.home'))
+# Fetch Blogs for the Logged-in User
 
 
-@routes_blueprint.route("/")
-@routes_blueprint.route("/home")
-def home():
-    logger.debug("Rendering home page.")
-    posts = Post.query.all()
-    return render_template('home.html', posts=posts)
-
-
-@routes_blueprint.route('/test-mongo')
-def test_mongo():
+def get_user_from_token():
+    auth_header = request.headers.get('Authorization')
+    if not auth_header:
+        return None, 'Authorization header is missing'
     try:
-        logger.debug("Attempting to insert test document into MongoDB.")
-        mongo.db.test.insert_one({"key": "value"})
-        logger.debug("Test document inserted successfully.")
-        return "MongoDB connected successfully and test document inserted!"
-    except Exception as e:
-        logger.error(f"Error testing MongoDB connection: {e}")
-        return f"Error: {e}"
+        token = auth_header.split(' ')[1]
+        user = User.query.get(token)
+        if not user:
+            return None, 'Invalid token'
+        return user, None
+    except IndexError:
+        return None, 'Token is malformed'
+
+
+@routes_blueprint.route('/api/posts', methods=['GET'])
+def get_posts():
+    user, error = get_user_from_token()
+    if error:
+        return jsonify({'error': error}), 401
+
+    posts = BlogPost.query.filter_by(user_id=user.id).all()
+    return jsonify([post.to_dict() for post in posts])
+
+
+@routes_blueprint.route('/api/myblogs', methods=['GET'])
+@login_required
+def get_user_blogs():
+    user_id = session.get('user_id')
+    blogs = BlogPost.query.filter_by(user_id=user_id).all()
+
+    # Convert blogs to dictionary format
+    blogs_data = [
+        {
+            "id": blog.id,
+            "title": blog.title,
+            "content": blog.content,
+            "date_posted": blog.date_posted.strftime("%Y-%m-%d %H:%M:%S")
+        }
+        for blog in blogs
+    ]
+    return jsonify({"blogs": blogs_data})
+
+# Create a New Blog Post
+
+
+@routes_blueprint.route('/api/posts', methods=['POST'])
+@login_required
+def create_post():
+    data = request.json
+    user_id = session.get('user_id')
+
+    if not data.get('title') or not data.get('content'):
+        return jsonify({'error': 'Title and Content are required'}), 400
+
+    new_post = BlogPost(
+        title=data['title'],
+        content=data['content'],
+        user_id=user_id
+    )
+    db.session.add(new_post)
+    db.session.commit()
+
+    return jsonify({'message': 'Post created successfully'})
